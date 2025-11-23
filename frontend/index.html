@@ -1,0 +1,83 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>RAG Chat Widget</title>
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif}
+    #botBtn {
+      position: fixed; left: 20px; bottom: 20px;
+      background:#0b5cff; color:white; border-radius:50%; width:64px; height:64px;
+      display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:9999;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+    }
+    #botWindow {
+      position: fixed; left: 20px; bottom: 100px; width:360px; max-height:70vh;
+      background:white; border-radius:10px; box-shadow: 0 6px 24px rgba(0,0,0,0.2);
+      display:none; flex-direction:column; overflow:hidden; z-index:9999;
+    }
+    #botMessages { padding:10px; overflow:auto; flex:1; max-height:60vh; }
+    .msg{ margin:8px; padding:8px; border-radius:8px; }
+    .you{ background:#f1f1f1; text-align:right; }
+    .bot{ background:#e9f0ff; text-align:left; }
+    #botInput{ display:flex; padding:8px; border-top:1px solid #eee }
+    #botInput input{ flex:1; padding:8px; border-radius:6px; border:1px solid #ddd }
+    #botInput button{ margin-left:8px; padding:8px 12px; border-radius:6px; border:none; background:#0b5cff; color:#fff; cursor:pointer }
+  </style>
+</head>
+<body>
+  <div id="botBtn">💬</div>
+  <div id="botWindow">
+    <div id="botMessages"></div>
+    <div id="botInput">
+      <input id="q" placeholder="Ask about your docs..." />
+      <button id="send">Send</button>
+    </div>
+  </div>
+
+<script>
+const backend = "https://<YOUR_RENDER_SERVICE_URL>/chat"; // <-- replace with your deployed Render URL
+
+const btn = document.getElementById('botBtn');
+const win = document.getElementById('botWindow');
+const msgs = document.getElementById('botMessages');
+btn.onclick = ()=> win.style.display = win.style.display==='flex' ? 'none' : 'flex';
+
+function appendMessage(cls, text){
+  const d = document.createElement('div');
+  d.className = 'msg ' + cls;
+  d.textContent = text;
+  msgs.appendChild(d);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+async function sendQuery(q){
+  appendMessage('you', q);
+  try {
+    const resp = await fetch(backend, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({question: q})
+    });
+    const data = await resp.json();
+    if (data.answer){
+      appendMessage('bot', data.answer);
+    } else if (data.retrieved_excerpts){
+      appendMessage('bot', "Here are relevant excerpts:\n\n" + data.retrieved_excerpts.join("\n\n---\n\n"));
+    } else {
+      appendMessage('bot', JSON.stringify(data));
+    }
+  } catch (err){
+    appendMessage('bot', "Error contacting backend: " + err.message);
+  }
+}
+
+document.getElementById('send').onclick = ()=>{
+  const q = document.getElementById('q').value;
+  if(!q) return;
+  sendQuery(q);
+  document.getElementById('q').value = '';
+}
+</script>
+</body>
+</html>
