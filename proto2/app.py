@@ -9,25 +9,19 @@ from sklearn.metrics.pairwise import cosine_similarity
 from PyPDF2 import PdfReader
 from docx import Document
 
-# -----------------------------
-# Config
-# -----------------------------
+
 DOCS_DIR = "docs"
 ALLOWED_EXTS = ("*.txt", "*.md", "*.pdf", "*.docx")
 CHUNK_SIZE = 800
 CHUNK_OVERLAP = 200
 
-# -----------------------------
-# State
-# -----------------------------
+
 documents = []
 chunks = []
 vectorizer = None
 chunk_vectors = None
 
-# -----------------------------
-# Readers
-# -----------------------------
+
 def read_txt(path):
     try:
         with open(path, "r", encoding="utf-8", errors="ignore") as f:
@@ -70,9 +64,7 @@ def load_file(path):
         return read_docx(path)
     return ""
 
-# -----------------------------
-# Chunking
-# -----------------------------
+
 def chunk_text(text, size=CHUNK_SIZE, overlap=CHUNK_OVERLAP):
     if not text:
         return []
@@ -90,13 +82,10 @@ def chunk_text(text, size=CHUNK_SIZE, overlap=CHUNK_OVERLAP):
             start = 0
     return out
 
-# -----------------------------
-# Simple summarizer (no LLM)
-# -----------------------------
+
 def short_summary(text, max_chars=230):
     if not text:
         return ""
-    # prefer whole-sentence endings
     text = text.replace("\n", " ").strip()
     if len(text) <= max_chars:
         return text
@@ -113,12 +102,9 @@ def short_summary(text, max_chars=230):
             break
     if out:
         return out if len(out) <= max_chars else out[:max_chars].rstrip() + "…"
-    # fallback: hard truncate
     return text[:max_chars].rstrip() + "…"
 
-# -----------------------------
-# Index builder
-# -----------------------------
+
 def build_index():
     global documents, chunks, vectorizer, chunk_vectors
     documents = []
@@ -159,12 +145,11 @@ def build_index():
     chunk_vectors = vectorizer.fit_transform(chunk_texts)
     print(f"Indexed {len(documents)} documents -> {len(chunks)} chunks")
 
-# build at startup
+
 build_index()
 
-# -----------------------------
-# Flask app
-# -----------------------------
+# ----//////////////////////////////////
+# FLASK :::::::::::::
 app = Flask(__name__)
 CORS(app)
 
@@ -196,7 +181,7 @@ def chat():
     except Exception as e:
         return jsonify({"answer": f"Retrieval error: {e}"})
 
-    # get best chunk
+
     best_excerpt = None
     for idx in ranked:
         if sims[idx] <= 0:
@@ -207,7 +192,7 @@ def chat():
     if not best_excerpt:
         return jsonify({"answer": "I couldn't find anything relevant in your docs."})
 
-    # produce short answer
+
     short = short_summary(best_excerpt, max_chars=230)
     return jsonify({"answer": short})
 
