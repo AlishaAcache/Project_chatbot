@@ -200,42 +200,48 @@
   </div>
 
 <script>
-// <-- REPLACE THIS WITH YOUR RENDER URL -->
+// <-- PUT YOUR BACKEND URL HERE -->
 const backend = "http://localhost:5000/chat";
-
 
 const btn = document.getElementById('botBtn');
 const win = document.getElementById('botWindow');
 const msgs = document.getElementById('botMessages');
+const input = document.getElementById('q');
 
 // Toggle Window
 btn.onclick = () => {
   const isVisible = win.style.display === 'flex';
   win.style.display = isVisible ? 'none' : 'flex';
   if (!isVisible) {
-      setTimeout(() => document.getElementById('q').focus(), 100);
+      setTimeout(() => input.focus(), 100);
   }
 };
 
+// Add message bubble
 function appendMessage(cls, text){
   const d = document.createElement('div');
   d.className = 'msg ' + cls;
-  d.textContent = text;
+  
+  // Allow line breaks in text
+  d.innerHTML = text.replace(/\n/g, "<br>");
+  
   msgs.appendChild(d);
   msgs.scrollTop = msgs.scrollHeight;
 }
 
+// Add tiny source label
+function appendSources(sources){
+  if (!sources || sources.length === 0) return;
+  const d = document.createElement('div');
+  d.className = 'msg bot';
+  d.style.fontSize = "11px";
+  d.style.opacity = "0.6";
+  d.textContent = "Source: " + sources.map(s => s.split('/').pop()).join(", ");
+  msgs.appendChild(d);
+}
+
 async function sendQuery(q){
   appendMessage('you', q);
-  
-  // -- FOR DEMO PURPOSES ONLY: Check if URL is still placeholder --
-  if (backend.includes("<YOUR_RENDER_SERVICE_URL>")) {
-      setTimeout(() => {
-          appendMessage('bot', "Mock Response: I see you haven't replaced the backend URL yet. Once you add your Render URL, I will fetch real answers!");
-      }, 600);
-      return;
-  }
-  // -------------------------------------------------------------
 
   try {
     const resp = await fetch(backend, {
@@ -243,37 +249,61 @@ async function sendQuery(q){
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({question: q})
     });
-    
+
     if (!resp.ok) throw new Error("Network response was not ok");
 
     const data = await resp.json();
+
+    // 🌟 --- Friendly Conversational Responses --- 🌟
     if (data.answer){
       appendMessage('bot', data.answer);
-    } else if (data.retrieved_excerpts){
-      appendMessage('bot', data.retrieved_excerpts.join("\n\n---\n\n"));
-    } else {
-      appendMessage('bot', JSON.stringify(data));
+      appendSources(data.sources);
+      return;
     }
+
+    // Handle 2-word document summaries
+    if (data.two_words_per_doc){
+      let msg = "<b>Two-word summary:</b><br>";
+      data.two_words_per_doc.forEach(d => {
+        const name = d.path.split("/").pop();
+        msg += `${name}: ${d.two_words.join(", ")}<br>`;
+      });
+      appendMessage('bot', msg);
+      return;
+    }
+
+    // Fallback 1: Use first retrieved excerpt
+    if (data.answers && data.answers.length > 0){
+      appendMessage('bot', data.answers[0].text);
+      appendSources([data.answers[0].source_path]);
+      return;
+    }
+
+    // Fallback 2: Show safe compact JSON
+    appendMessage('bot', "Hmm... I couldn't find a friendly answer. Here is what I got:");
+    appendMessage('bot', JSON.stringify(data, null, 2));
+
   } catch (err){
-    appendMessage('bot', "Error contacting backend: " + err.message);
+    appendMessage('bot', "⚠️ Error contacting backend:<br>" + err.message);
   }
 }
 
-// Handle Send Button
+// Send button
 document.getElementById('send').onclick = ()=>{
-  const qVal = document.getElementById('q').value;
+  const qVal = input.value.trim();
   if(!qVal) return;
   sendQuery(qVal);
-  document.getElementById('q').value = '';
-}
+  input.value = '';
+};
 
-// Handle Enter Key
-document.getElementById('q').addEventListener("keypress", function(event) {
+// Enter key handler
+input.addEventListener("keypress", function(event) {
   if (event.key === "Enter") {
     event.preventDefault();
     document.getElementById("send").click();
   }
 });
 </script>
+
 </body>
 </html>
