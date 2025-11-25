@@ -59,13 +59,16 @@ G → Generation (creating a short natural-language answer from it)
                 │ predict_intent(question)       │
                 └────────────────────────────────┘
                    │
-     ┌─────────────┴───────────────┐
-     │ intent detected? (conf > 0.6)│
-     └─────────────┬───────────────┘
+                ┌────────────────────────────────┐
+                │ intent detected?(conf > 0.6)    │
+                └────────────────────────────────┘
+     
                    │yes                         │no → go to RAG
                    ▼
        returns canned intent reply
-                          
+
+
+
 
 
                       RAG PIPELINE STARTS
