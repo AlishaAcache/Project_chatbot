@@ -1,4 +1,7 @@
 <img width="1278" height="630" alt="image" src="https://github.com/user-attachments/assets/4701b0d0-1d38-4aca-b30e-268e9fecb0aa" />
+
+
+
                 ┌─────────────────────────────────────────────┐
                 │               STARTUP (app run)              │
                 └─────────────────────────────────────────────┘
