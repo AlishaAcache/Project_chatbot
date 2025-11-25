@@ -8,12 +8,11 @@ from flask_cors import CORS
 from sentence_transformers import SentenceTransformer
 from typing import List, Dict, Any
 
-# simple ML for intent classifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import LabelEncoder
 from sklearn.feature_extraction.text import TfidfVectorizer
 
-# Keep file readers (pdf/docx/txt)
+#
 import PyPDF2
 import docx
 
@@ -25,27 +24,23 @@ CHUNK_SIZE = 800
 CHUNK_OVERLAP = 200
 EMBEDDING_MODEL = os.environ.get("EMBEDDING_MODEL", "all-MiniLM-L6-v2")
 TOP_K_DEFAULT = 3
-INTENT_CONF_THRESHOLD = 0.60  # confidence threshold for intent classifier
+INTENT_CONF_THRESHOLD = 0.60  
 
 app = Flask(__name__)
 CORS(app)
 
-# Globals for index and classifier
 model = None  # SentenceTransformer instance
 documents: List[Dict[str, Any]] = []  # {doc_id, path, text}
 chunks: List[Dict[str, Any]] = []  # {chunk_id, doc_id, path, text}
 chunk_embeddings: np.ndarray = None
 
-# Intent classifier artifacts
 intent_model = None
 intent_label_encoder = None
 intent_examples = None
 intent_responses = None
 doc_tfidf_vectorizer = None
 
-# -------------------------
-# File reading utilities
-# -------------------------
+
 def read_txt(path: str) -> str:
     try:
         with open(path, "r", encoding="utf-8", errors="ignore") as f:
@@ -81,9 +76,6 @@ def load_file(path: str) -> str:
         return read_docx(path)
     return read_txt(path)
 
-# -------------------------
-# Chunking
-# -------------------------
 def chunk_text(text: str, size=CHUNK_SIZE, overlap=CHUNK_OVERLAP):
     if not text:
         return []
@@ -99,9 +91,7 @@ def chunk_text(text: str, size=CHUNK_SIZE, overlap=CHUNK_OVERLAP):
         start = start + size - overlap
     return chunks
 
-# -------------------------
-# Index builder using sentence-transformers
-# -------------------------
+
 def build_index():
     global model, documents, chunks, chunk_embeddings, doc_tfidf_vectorizer
 
@@ -114,7 +104,6 @@ def build_index():
     doc_id = 0
     chunk_global_id = 0
 
-    # find files
     files = []
     for pat in ALLOWED_EXTS:
         files.extend(glob.glob(os.path.join(DOCS_DIR, pat)))
@@ -147,7 +136,6 @@ def build_index():
         chunk_embeddings = model.encode(all_chunk_texts, show_progress_bar=True, convert_to_numpy=True, batch_size=64, normalize_embeddings=True)
         print("Index built:", len(documents), "docs |", len(chunks), "chunks | embeddings shape:", chunk_embeddings.shape)
 
-    # Build a TF-IDF vectorizer for document-level keywords (used to get top-2 terms)
     try:
         texts = [d["text"] for d in documents]
         if texts:
@@ -157,9 +145,7 @@ def build_index():
         print("Failed to build doc TF-IDF vectorizer:", e)
         doc_tfidf_vectorizer = None
 
-# -------------------------
-# Intent classifier: simple supervised classifier trained at startup
-# -------------------------
+
 def train_intent_classifier():
     """
     Trains a tiny classifier on example phrases for:
@@ -195,7 +181,6 @@ def train_intent_classifier():
         ]
     }
 
-    # Canned responses for intents
     intent_responses = {
         "greeting": "Hi — hello! 👋 How can I help you today?",
         "how_are_you": "I'm an assistant running on your server — ready and functioning!",
@@ -205,7 +190,6 @@ def train_intent_classifier():
         "goodbye": "Goodbye — feel free to ask more questions anytime!"
     }
 
-    # Prepare training data
     X_texts = []
     y_labels = []
     for intent, examples in intent_examples.items():
@@ -213,20 +197,16 @@ def train_intent_classifier():
             X_texts.append(ex)
             y_labels.append(intent)
 
-    # Label encode
     intent_label_encoder = LabelEncoder()
     y = intent_label_encoder.fit_transform(y_labels)
 
-    # Use sentence-transformers embeddings for classifier features
     if model is None:
-        # Load model if not loaded yet (very unlikely)
         print("Loading embedding model for intent classifier:", EMBEDDING_MODEL)
         temp_model = SentenceTransformer(EMBEDDING_MODEL)
         emb = temp_model.encode(X_texts, convert_to_numpy=True, normalize_embeddings=True)
     else:
         emb = model.encode(X_texts, convert_to_numpy=True, normalize_embeddings=True)
 
-    # Train a small logistic regression (probabilistic)
     try:
         clf = LogisticRegression(max_iter=1000)
         clf.fit(emb, y)
@@ -250,9 +230,7 @@ def predict_intent(text: str):
     conf = float(probs[idx])
     return label, conf
 
-# -------------------------
-# Search helper
-# -------------------------
+
 def search_top_k(query: str, k: int = TOP_K_DEFAULT):
     global model, chunks, chunk_embeddings
     if model is None or chunk_embeddings is None or len(chunks) == 0:
@@ -274,9 +252,7 @@ def search_top_k(query: str, k: int = TOP_K_DEFAULT):
         })
     return results
 
-# -------------------------
-# Two-word descriptors for documents (using TF-IDF top terms)
-# -------------------------
+
 def get_two_words_per_doc():
     """
     Returns a list of dict: {doc_id, path, two_words: [w1, w2]}
@@ -285,14 +261,12 @@ def get_two_words_per_doc():
     global documents, doc_tfidf_vectorizer
     out = []
     if doc_tfidf_vectorizer is None or not documents:
-        # fallback: take first two non-empty words from the document
         for d in documents:
             words = [w for w in (d["text"] or "").split() if len(w) > 2]
             two = words[:2] if words else []
             out.append({"doc_id": d["doc_id"], "path": d["path"], "two_words": two})
         return out
 
-    # vectorize each doc and pick top 2 tf-idf terms per document
     try:
         X = doc_tfidf_vectorizer.transform([d["text"] for d in documents])  # shape (n_docs, n_features)
         feature_names = np.array(doc_tfidf_vectorizer.get_feature_names_out())
@@ -312,9 +286,7 @@ def get_two_words_per_doc():
             out.append({"doc_id": d["doc_id"], "path": d["path"], "two_words": words[:2]})
     return out
 
-# -------------------------
-# Flask endpoints
-# -------------------------
+
 @app.route("/", methods=["GET"])
 def home():
     return "RAG semantic-search backend (sentence-transformers) with simple intents running"
@@ -322,19 +294,16 @@ def home():
 @app.route("/reload", methods=["GET", "POST"])
 def reload_index():
     build_index()
-    # retrain intent classifier after index rebuilt (so TF-IDF vectorizer is available)
     train_intent_classifier()
     return jsonify({"status": "ok", "docs": len(documents), "chunks": len(chunks)})
 
 @app.route("/doc_summary", methods=["GET"])
 def doc_summary():
-    # returns two-word descriptors per doc
     out = get_two_words_per_doc()
     return jsonify({"docs": out})
 import re
 
 def split_to_sentences(text: str):
-    # Simple sentence splitter (keeps punctuation)
     sentences = re.split(r'(?<=[.!?])\s+', text.strip())
     return [s.strip() for s in sentences if len(s.strip()) > 0]
 
@@ -350,18 +319,15 @@ def synthesize_short_answer(query: str, top_k: int = 3, max_sentences: int = 2):
     if not results:
         return None, []
 
-    # Combine text from top chunks
     combined_text = " ".join([r["text"] for r in results])
     sentences = split_to_sentences(combined_text)
 
     if not sentences:
         return None, []
 
-    # Embed all sentences + query
     sent_embs = model.encode(sentences, convert_to_numpy=True, normalize_embeddings=True)
     q_emb = model.encode([query], convert_to_numpy=True, normalize_embeddings=True)[0]
 
-    # Cosine similarity via dot product (normalized embeddings)
     sims = np.dot(sent_embs, q_emb)
 
     # Pick the top scoring sentences
