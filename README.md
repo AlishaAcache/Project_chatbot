@@ -1,14 +1,37 @@
-.. current update: proto2
-<img width="1278" height="630" alt="image" src="https://github.com/user-attachments/assets/ae5c93f2-173b-4934-b91b-0c1e2397ccef" />
+.. current update: proto3 ////
 
--  Runs a Flask API that responds to chat queries.
-  
-- Reads your documents from the docs/ folder (txt, PDF, docx, md).
-  
-- Breaks documents into chunks and creates semantic embeddings for search.
-  
-- Contains a small intent classifier for basic greetings/actions.
-  
-- Answers questions by retrieving the most relevant document chunks.
-  
-- Returns answer + source files back to the frontend.
+<img width="351" height="550" alt="image" src="https://github.com/user-attachments/assets/654f8a42-72c5-4b6f-9322-246371ae8ab3" />
+
+
+- Flask API with /chat, /reload, and /doc_summary.
+
+- Loads documents from docs/ (.txt, .md, .pdf, .docx).
+
+- Splits documents into chunks and builds a semantic index using sentence-transformers.
+
+- Uses fast vector search (dot-product) to retrieve top-K relevant chunks.
+
+- Includes an intent classifier + rule-based greeting handling (hi/hello/how are you).
+
+- Synthesizes short answers from retrieved text (sentence ranking).
+
+- Optionally improves the answer using OpenAI (enhance_with_llm()).
+
+- Returns both the answer and source file paths.
+
+- Configurable via env vars: OPENAI_API_KEY, OPENAI_MODEL, EMBEDDING_MODEL, TOP_K_DEFAULT, INTENT_CONF_THRESHOLD.
+
+R — Retrieval
+
+Finds relevant document text.
+Where: build_index(), search_top_k()
+
+A — Augmentation
+
+Extracts the best sentences from retrieved chunks to form a concise context.
+Where: synthesize_short_answer()
+
+G — Generation
+
+Produces the final natural answer (optionally using OpenAI).
+Where: enhance_with_llm() + logic inside /chat
