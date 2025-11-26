@@ -1,0 +1,309 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RAG Chat Widget</title>
+  <style>
+    /* Basic Site Styling */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f9;
+      color: #333;
+      line-height: 1.6;
+    }
+
+    header {
+      background: white;
+      padding: 40px 20px;
+      text-align: center;
+      border-bottom: 1px solid #ddd;
+    }
+
+    h1 {
+      margin: 0;
+      color: #2c3e50;
+      font-size: 2.5rem;
+    }
+
+    .content {
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+
+    .placeholder-text {
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      margin-bottom: 20px;
+    }
+
+    /* Chatbot CSS - Updated for Bottom Right */
+    #botBtn {
+      position: fixed;
+      right: 20px; /* Changed from left to right */
+      bottom: 20px;
+      background: #0b5cff;
+      color: white;
+      border-radius: 50%;
+      width: 64px;
+      height: 64px;
+      font-size: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 9999;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+      transition: transform 0.2s;
+    }
+
+    #botBtn:hover {
+      transform: scale(1.1);
+    }
+
+    #botWindow {
+      position: fixed;
+      right: 20px; /* Changed from left to right */
+      bottom: 100px;
+      width: 360px;
+      max-width: 90vw; /* Responsive width */
+      max-height: 70vh;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.2);
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 9999;
+      border: 1px solid #eee;
+    }
+
+    #botTitle {
+      background: #0b5cff;
+      color: white;
+      padding: 15px;
+      font-weight: bold;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    #botMessages {
+      padding: 15px;
+      overflow: auto;
+      flex: 1;
+      max-height: 60vh;
+      background: #f9f9f9;
+    }
+
+    .msg {
+      margin-bottom: 10px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 14px;
+      max-width: 80%;
+      word-wrap: break-word;
+    }
+
+    .you {
+      background: #0b5cff;
+      color: white;
+      align-self: flex-end;
+      margin-left: auto;
+      border-bottom-right-radius: 2px;
+    }
+
+    .bot {
+      background: #e9f0ff;
+      color: #333;
+      align-self: flex-start;
+      margin-right: auto;
+      border-bottom-left-radius: 2px;
+    }
+
+    #botInput {
+      display: flex;
+      padding: 10px;
+      border-top: 1px solid #eee;
+      background: white;
+    }
+
+    #botInput input {
+      flex: 1;
+      padding: 10px;
+      border-radius: 20px;
+      border: 1px solid #ddd;
+      outline: none;
+      font-size: 14px;
+    }
+
+    #botInput input:focus {
+      border-color: #0b5cff;
+    }
+
+    #botInput button {
+      margin-left: 10px;
+      padding: 8px 16px;
+      border-radius: 20px;
+      border: none;
+      background: #0b5cff;
+      color: #fff;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    #botInput button:hover {
+      background: #004ad9;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Basic Site Structure -->
+  <header>
+    <h1>Welcome to demo App</h1>
+    <p>Ask questions about your documents using the widget below.</p>
+  </header>
+
+  <div class="content">
+    <div class="placeholder-text">
+      <h2>About This Tool</h2>
+      <p>This is a demonstration interface for your RAG (Retrieval-Augmented Generation) chatbot. The content on this page mimics a standard documentation or business site.</p>
+      <p>Click the chat icon to interact with the backend.</p>
+    </div>
+    <div class="placeholder-text">
+      <h2>Documentation</h2>
+      <p>..................</p>
+    </div>
+  </div>
+
+  <!-- Chatbot HTML -->
+  <div id="botBtn">💬</div>
+  
+  <div id="botWindow">
+    <div id="botTitle">
+      <span>Assistant</span>
+      <span onclick="document.getElementById('botBtn').click()" style="cursor:pointer;">✕</span>
+    </div>
+    <div id="botMessages">
+      <div class="msg bot">Hello! I can answer questions about your documents. What would you like to know?</div>
+    </div>
+    <div id="botInput">
+      <input id="q" placeholder="Ask about your docs..." autocomplete="off" />
+      <button id="send">Send</button>
+    </div>
+  </div>
+
+<script>
+// <-- PUT YOUR BACKEND URL HERE -->
+const backend = "http://localhost:5000/chat";
+
+const btn = document.getElementById('botBtn');
+const win = document.getElementById('botWindow');
+const msgs = document.getElementById('botMessages');
+const input = document.getElementById('q');
+
+// Toggle Window
+btn.onclick = () => {
+  const isVisible = win.style.display === 'flex';
+  win.style.display = isVisible ? 'none' : 'flex';
+  if (!isVisible) {
+      setTimeout(() => input.focus(), 100);
+  }
+};
+
+// Add message bubble
+function appendMessage(cls, text){
+  const d = document.createElement('div');
+  d.className = 'msg ' + cls;
+  
+  // Allow line breaks in text
+  d.innerHTML = text.replace(/\n/g, "<br>");
+  
+  msgs.appendChild(d);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+// Add tiny source label
+function appendSources(sources){
+  if (!sources || sources.length === 0) return;
+  const d = document.createElement('div');
+  d.className = 'msg bot';
+  d.style.fontSize = "11px";
+  d.style.opacity = "0.6";
+  d.textContent = "Source: " + sources.map(s => s.split('/').pop()).join(", ");
+  msgs.appendChild(d);
+}
+
+async function sendQuery(q){
+  appendMessage('you', q);
+
+  try {
+    const resp = await fetch(backend, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({question: q})
+    });
+
+    if (!resp.ok) throw new Error("Network response was not ok");
+
+    const data = await resp.json();
+
+    // 🌟 --- Friendly Conversational Responses --- 🌟
+    if (data.answer){
+      appendMessage('bot', data.answer);
+      appendSources(data.sources);
+      return;
+    }
+
+    // Handle 2-word document summaries
+    if (data.two_words_per_doc){
+      let msg = "<b>Two-word summary:</b><br>";
+      data.two_words_per_doc.forEach(d => {
+        const name = d.path.split("/").pop();
+        msg += `${name}: ${d.two_words.join(", ")}<br>`;
+      });
+      appendMessage('bot', msg);
+      return;
+    }
+
+    // Fallback 1: Use first retrieved excerpt
+    if (data.answers && data.answers.length > 0){
+      appendMessage('bot', data.answers[0].text);
+      appendSources([data.answers[0].source_path]);
+      return;
+    }
+
+    // Fallback 2: Show safe compact JSON
+    appendMessage('bot', "Hmm... I couldn't find a friendly answer. Here is what I got:");
+    appendMessage('bot', JSON.stringify(data, null, 2));
+
+  } catch (err){
+    appendMessage('bot', "⚠️ Error contacting backend:<br>" + err.message);
+  }
+}
+
+// Send button
+document.getElementById('send').onclick = ()=>{
+  const qVal = input.value.trim();
+  if(!qVal) return;
+  sendQuery(qVal);
+  input.value = '';
+};
+
+// Enter key handler
+input.addEventListener("keypress", function(event) {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    document.getElementById("send").click();
+  }
+});
+</script>
+
+</body>
+</html>
