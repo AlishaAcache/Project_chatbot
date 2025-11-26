@@ -1,0 +1,15 @@
+# flask
+# flask-cors
+# scikit-learn
+# PyPDF2
+# python-docx
+
+flask
+flask-cors
+scikit-learn
+PyPDF2
+python-docx
+openai        # for LLM step
+gunicorn
+requests
+
