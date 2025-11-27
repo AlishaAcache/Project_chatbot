@@ -1,6 +1,6 @@
 # Vector Database Comparison Table
 
-# | Vector DB                                     | Open-Source?       | Deployment                            | Key Merits                                                                                                            | Drawbacks                                                          |
+| Vector DB                                     | Open-Source?       | Deployment                            | Key Merits                                                                                                            | Drawbacks                                                          |
 | --------------------------------------------- | ------------------ | ------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
 | **Qdrant**                                    | ✔ Yes (Apache-2.0) | Self-host / Cloud                     | Very fast ANN search (HNSW), excellent metadata filtering, hybrid search, easy API, cost-efficient, production-ready. | Not fully distributed like Milvus for *extreme* scale (billions).  |
 | **Weaviate**                                  | ✔ Yes              | Self-host / Cloud                     | Schema-based, hybrid search, good for structured + unstructured mix, GraphQL API.                                     | Heavier setup; not as lightweight as Qdrant.                       |
