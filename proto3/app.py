@@ -1,11 +1,10 @@
-
 # app.py
 import os
 import glob
 import json
 import numpy as np
 import re
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -56,7 +55,7 @@ CORS(app)
 model = None  # SentenceTransformer instance
 documents: List[Dict[str, Any]] = []  # {doc_id, path, text}
 chunks: List[Dict[str, Any]] = []  # {chunk_id, doc_id, path, text}
-chunk_embeddings: np.ndarray = None
+chunk_embeddings: Optional[np.ndarray] = None
 
 # Intent classifier artifacts
 intent_model = None
@@ -313,7 +312,11 @@ def split_to_sentences(text: str):
     sentences = re.split(r'(?<=[.!?])\s+', text.strip())
     return [s.strip() for s in sentences if len(s.strip()) > 0]
 
-def synthesize_short_answer(query: str, top_k: int = 3, max_sentences: int = 2):
+def synthesize_short_answer(query: str, top_k: int = 3, max_sentences: Optional[int] = 2):
+    """
+    If max_sentences is None -> return the full combined extracted text (no summarization).
+    Otherwise, pick the top `max_sentences` sentences from the combined text.
+    """
     global model, chunks, chunk_embeddings
 
     results = search_top_k(query, k=top_k)
@@ -321,9 +324,17 @@ def synthesize_short_answer(query: str, top_k: int = 3, max_sentences: int = 2):
         return None, []
 
     combined_text = " ".join([r["text"] for r in results])
+    sources = [r["path"] for r in results]
+
+    if max_sentences is None:
+        # Return full RAG-extracted answer (no sentence picking)
+        # Keep the RAG text intact for the LLM to rewrite / expand if desired
+        return combined_text, sources
+
+    # original behavior: pick top matching sentences
     sentences = split_to_sentences(combined_text)
     if not sentences:
-        return None, []
+        return combined_text, sources
 
     sent_embs = model.encode(sentences, convert_to_numpy=True, normalize_embeddings=True)
     q_emb = model.encode([query], convert_to_numpy=True, normalize_embeddings=True)[0]
@@ -332,7 +343,6 @@ def synthesize_short_answer(query: str, top_k: int = 3, max_sentences: int = 2):
     chosen = [sentences[i] for i in sorted(top_indices)]
     answer = " ".join(s if s.endswith(('.', '?', '!')) else s + '.' for s in chosen)
     answer = "Sure — " + answer
-    sources = [r["path"] for r in results]
     return answer, sources
 
 # -------------------------
@@ -342,10 +352,13 @@ def enhance_with_llm(user_question: str, rag_answer: str, sources: List[str]) ->
     """
     Send a constrained prompt to OpenAI to rewrite/improve the RAG answer.
     If OPENAI_API_KEY is not set or call fails, returns the original rag_answer.
+
+    Updated: removed forced 'concise <=200 tokens' instruction so LLM can produce full answers.
     """
     if not OPENAI_API_KEY:
         return rag_answer
 
+    # Provide the LLM with explicit instruction: do NOT invent facts; preserve details; full answers allowed.
     prompt = f"""
 You are a helpful assistant that must NOT hallucinate.
 User question: {user_question}
@@ -355,14 +368,14 @@ RAG extracted answer (use only this info; do not add new facts):
 
 Sources: {', '.join([s.split('/')[-1] for s in sources]) if sources else 'none'}
 
-Task: Rewrite the RAG answer into a clear, friendly final answer. Keep it concise (<= 200 tokens). Do NOT invent facts or add information not present in the RAG extracted answer. If the RAG answer is uncertain, say "I couldn't find a definite answer in the documents."
+Task: Rewrite the RAG answer into a clear, friendly final answer. Preserve all details present in the RAG extracted answer and do NOT shorten or summarize it. You may expand clarifications using only information present in the RAG text, and you may reorganize for clarity. If the RAG answer is uncertain, explicitly say "I couldn't find a definite answer in the documents."
 """
 
     try:
         resp = client.chat.completions.create(
             model=OPENAI_MODEL,
             messages=[{"role": "user", "content": prompt}],
-            max_tokens=200,
+            max_tokens=4000,
             temperature=0.0
         )
         # Depending on SDK, extract content
@@ -424,23 +437,23 @@ def chat():
             resp = intent_responses.get(intent, "Sorry, I don't understand.")
             return jsonify({"question": q, "intent": intent, "confidence": conf, "answer": resp})
 
-    # 2) semantic search + concise synthesis
+    # 2) semantic search + full synthesis (no forced shortening)
     if model is None or chunk_embeddings is None:
         return jsonify({"error": "index not built or no docs found"}), 500
 
-    convo, sources = synthesize_short_answer(q, top_k=top_k, max_sentences=2)
+    # Use full RAG-extracted text (no sentence-limiting)
+    convo, sources = synthesize_short_answer(q, top_k=top_k, max_sentences=None)
     if convo:
-        # Enhance with OpenAI LLM (if available)
+        # Enhance with OpenAI LLM (if available). The LLM prompt allows long answers now.
         final_answer = enhance_with_llm(q, convo, sources)
         return jsonify({"question": q, "intent": None, "confidence": conf, "answer": final_answer, "sources": sources})
 
-    # last-resort: short snippet fallback
+    # last-resort: full snippet fallback (no truncation)
     results = search_top_k(q, k=top_k)
     reply_texts = []
     for r in results:
         snippet = r["text"]
-        if len(snippet) > 200:
-            snippet = snippet[:200].rsplit(".", 1)[0] + "..."
+        # previously truncated to 200 chars; now keep full snippet
         reply_texts.append({"score": r["score"], "text": snippet, "source_path": r["path"]})
 
     if not reply_texts:
