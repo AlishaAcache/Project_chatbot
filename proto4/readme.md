@@ -1,0 +1,7 @@
+| Feature | Azure AI Search (The Corporate Choice) | Qdrant (The Performance Choice) |
+|--------|------------------------------------------|----------------------------------|
+| **Setup & Ingestion** | **Merit:** Zero Code — *Indexers* automatically pull from Blob Storage, crack PDFs, and handle OCR.<br>**Demerit:** Limited customization in the auto-ingestion pipeline. | **Demerit:** High Code — you must write, host, and debug your own Python scripts (like `ingest_qdrant.py`) to parse files.<br>**Merit:** Full control over every chunking decision. |
+| **Search Quality** | **Merit:** Hybrid + Semantic Ranking. Best-in-class retrieval accuracy out-of-the-box. Uses Bing’s ranking tech. | **Demerit:** Vector-only (Standard). Requires complex custom coding to achieve Hybrid Search (Keyword + Vector) parity with Azure. |
+| **Security** | **Merit:** Native Entra ID. Inherits company access policies. Data stays inside your VNET via Private Link. | **Demerit:** Separate system. Requires managing API keys or setting up complex hybrid-cloud integration for VNET security. |
+| **Maintenance** | **Merit:** Fully Managed. Microsoft patches, scales automatically, and provides SLA uptime guarantees. No servers. | **Demerit:** Self-managed logic. Even with Qdrant Cloud, *you* manage ingestion code and pipeline behavior. |
+| **Cost Model** | **Demerit:** Expensive & stepped pricing — ~$74/mo → ~$245/mo → $1000+/mo depending on tier. Costs jump in large steps. | **Merit:** Linear & cheaper — scales smoothly based on exact resource usage (RAM + storage). |
