@@ -1,0 +1,26 @@
+# Flask web framework and utilities
+flask
+flask-cors
+gunicorn
+
+# Machine Learning and NLP
+scikit-learn
+sentence-transformers
+
+# Document processing
+PyPDF2
+python-docx
+
+# OpenAI for LLM and Vision capabilities
+openai
+
+# Image processing
+Pillow
+
+# Utilities
+requests
+numpy
+
+# add this line to requirements.txt
+pytesseract
+

@@ -1,0 +1,705 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>[a]cache - AI Document Intelligence Platform</title>
+  <style>
+    /* Professional Site Styling */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', sans-serif;
+      background: #ffffff;
+      color: #000;
+      line-height: 1.6;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    header {
+      background: transparent;
+      padding: 0;
+      text-align: left;
+      border: none;
+      max-width: 1200px;
+      margin: 0 auto 60px;
+    }
+
+    .logo {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #000;
+      margin-bottom: 60px;
+      letter-spacing: -1px;
+    }
+
+    .logo .bracket {
+      color: #000;
+    }
+
+    .tagline {
+      font-size: 4rem;
+      color: #000;
+      margin-bottom: 0;
+      font-weight: 700;
+      line-height: 1.1;
+      max-width: 900px;
+    }
+
+    .header-description {
+      display: none;
+    }
+
+    .content {
+      display: none;
+    }
+
+    .info-cards {
+      display: none;
+    }
+
+    .card {
+      display: none;
+    }
+
+    /* Chatbot CSS */
+    #botBtn {
+      position: fixed;
+      right: 25px;
+      bottom: 25px;
+      background: #000;
+      color: white;
+      border-radius: 50%;
+      width: 70px;
+      height: 70px;
+      font-size: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 9999;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      transition: all 0.3s;
+    }
+
+    #botBtn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+    }
+
+    #botWindow {
+      position: fixed;
+      right: 25px;
+      bottom: 110px;
+      width: 420px;
+      max-width: 90vw;
+      max-height: 75vh;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 9999;
+      border: 1px solid #e0e0e0;
+    }
+
+    #botTitle {
+      background: #000;
+      color: white;
+      padding: 20px;
+      font-weight: 600;
+      font-size: 1.1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    #closeBtn {
+      cursor: pointer;
+      font-size: 24px;
+      line-height: 1;
+      opacity: 0.9;
+      transition: opacity 0.2s;
+    }
+
+    #closeBtn:hover {
+      opacity: 1;
+    }
+
+    /* Mode Selection */
+    #modeSelection {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 20px;
+      background: #f8f9ff;
+    }
+
+    .mode-btn {
+      padding: 15px;
+      background: white;
+      border: 2px solid #000;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-weight: 600;
+      color: #000;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .mode-btn:hover {
+      background: #000;
+      color: white;
+      transform: translateX(5px);
+    }
+
+    .mode-btn .icon {
+      font-size: 24px;
+      width: 30px;
+    }
+
+    /* Chat Interface */
+    #chatInterface {
+      display: none;
+      flex-direction: column;
+      height: 100%;
+      max-height: 75vh;
+      overflow: hidden;
+    }
+
+    #backBtn {
+      padding: 12px 20px;
+      background: #f5f5f5;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      color: #000;
+      transition: background 0.2s;
+      text-align: left;
+      flex-shrink: 0;
+    }
+
+    #backBtn:hover {
+      background: #e8e8e8;
+    }
+
+    #botMessages {
+      padding: 20px;
+      overflow-y: auto;
+      flex: 1 1 auto;
+      min-height: 200px;
+      background: #f8f9ff;
+    }
+
+    #botMessages::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    #botMessages::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 10px;
+    }
+
+    #botMessages::-webkit-scrollbar-thumb {
+      background: #999;
+      border-radius: 10px;
+    }
+
+    #botMessages::-webkit-scrollbar-thumb:hover {
+      background: #666;
+    }
+
+    .msg {
+      margin-bottom: 12px;
+      padding: 12px 16px;
+      border-radius: 15px;
+      font-size: 14px;
+      max-width: 85%;
+      word-wrap: break-word;
+      line-height: 1.5;
+    }
+
+    .you {
+      background: #000;
+      color: white;
+      margin-left: auto;
+      border-bottom-right-radius: 4px;
+    }
+
+    .bot {
+      background: #f5f5f5;
+      color: #000;
+      border: none;
+      margin-right: auto;
+      border-bottom-left-radius: 4px;
+    }
+
+    .source-label {
+      font-size: 11px;
+      opacity: 0.7;
+      margin-top: 5px;
+      font-style: italic;
+    }
+
+    /* File Upload Section */
+    #fileUploadSection {
+      display: none;
+      padding: 10px 20px;
+      background: #fff;
+      border-top: 1px solid #e0e0e0;
+      max-height: 120px;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+
+    #fileUploadSection::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    #fileUploadSection::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 10px;
+    }
+
+    #fileUploadSection::-webkit-scrollbar-thumb {
+      background: #999;
+      border-radius: 10px;
+    }
+
+    #fileInput {
+      display: none;
+    }
+
+    .uploaded-file {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      background: #f8f9ff;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+
+    .uploaded-file:last-child {
+      margin-bottom: 0;
+    }
+
+    .remove-file {
+      cursor: pointer;
+      color: #f44336;
+      font-weight: bold;
+      font-size: 16px;
+      padding: 0 5px;
+    }
+
+    .remove-file:hover {
+      color: #d32f2f;
+    }
+
+    /* Input Section */
+    #botInput {
+      display: flex;
+      padding: 15px 20px;
+      border-top: 1px solid #e0e0e0;
+      background: white;
+      gap: 10px;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    #uploadBtn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 2px solid #e0e0e0;
+      background: white;
+      color: #000;
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    #uploadBtn:hover {
+      background: #000;
+      color: white;
+      border-color: #000;
+    }
+
+    #botInput input {
+      flex: 1;
+      padding: 12px 16px;
+      border-radius: 25px;
+      border: 2px solid #e0e0e0;
+      outline: none;
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+
+    #botInput input:focus {
+      border-color: #000;
+    }
+
+    #botInput button#send {
+      padding: 10px 20px;
+      border-radius: 25px;
+      border: none;
+      background: #000;
+      color: #fff;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    #botInput button#send:hover {
+      background: #333;
+    }
+
+    #botInput button#send:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .loading {
+      opacity: 0.6;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      body {
+        padding: 20px;
+      }
+
+      .logo {
+        font-size: 1.5rem;
+        margin-bottom: 40px;
+      }
+
+      .tagline {
+        font-size: 2rem;
+      }
+
+      #botWindow {
+        width: 95vw;
+        right: 2.5vw;
+      }
+
+      #botBtn {
+        width: 60px;
+        height: 60px;
+        font-size: 28px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header with [a]cache Branding -->
+  <header>
+    <div class="logo"><span class="bracket">[</span>a<span class="bracket">]</span>cache</div>
+    <h1 class="tagline">Crafting Exceptional solutions  ✦AI * software development That Delight Users</h1>
+  </header>
+
+  <!-- Chatbot Button -->
+  <div id="botBtn">💬</div>
+
+  <!-- Chatbot Window -->
+  <div id="botWindow">
+    <div id="botTitle">
+      <span>[a]cache Assistant</span>
+      <span id="closeBtn">✕</span>
+    </div>
+
+    <!-- Mode Selection Screen -->
+    <div id="modeSelection">
+      <button class="mode-btn" onclick="selectMode('question')">
+        <span class="icon">💬</span>
+        <span>Ask Question<br><small style="opacity:0.7;">Chat with our bot</small></span>
+      </button>
+      <button class="mode-btn" onclick="selectMode('protocol')">
+        <span class="icon">📋</span>
+        <span>About Protocol<br><small style="opacity:0.7;">Anything about our protocols</small></span>
+      </button>
+      <button class="mode-btn" onclick="selectMode('meeting')">
+        <span class="icon">📅</span>
+        <span>Schedule Meeting<br><small style="opacity:0.7;">Connect with our team</small></span>
+      </button>
+    </div>
+
+    <!-- Chat Interface (Hidden by default) -->
+    <div id="chatInterface">
+      <button id="backBtn" onclick="showModeSelection()">← Back to Menu</button>
+
+      <div id="botMessages">
+        <div class="msg bot">Hello! I can help you understand your documents. Upload a file or ask a question!</div>
+      </div>
+
+      <!-- File Upload Section (Hidden until files are added) -->
+      <div id="fileUploadSection">
+        <div id="uploadedFiles"></div>
+      </div>
+
+      <input type="file" id="fileInput" multiple accept=".pdf,.docx,.doc,.txt,.py,.js,.java,.cpp,.c,.md,.png,.jpg,.jpeg,.gif,.webp">
+
+      <div id="botInput">
+        <button id="uploadBtn" title="Attach files">+</button>
+        <input id="q" placeholder="Ask anything..." autocomplete="off" />
+        <button id="send">Send</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+// Backend URL
+const backend = "http://localhost:5000/chat";
+const uploadBackend = "http://localhost:5000/upload";
+
+// Global state
+let currentMode = null;
+let uploadedFiles = [];
+
+// DOM Elements
+const btn = document.getElementById('botBtn');
+const win = document.getElementById('botWindow');
+const closeBtn = document.getElementById('closeBtn');
+const modeSelection = document.getElementById('modeSelection');
+const chatInterface = document.getElementById('chatInterface');
+const msgs = document.getElementById('botMessages');
+const input = document.getElementById('q');
+const uploadBtn = document.getElementById('uploadBtn');
+const fileInput = document.getElementById('fileInput');
+const uploadedFilesDiv = document.getElementById('uploadedFiles');
+const fileUploadSection = document.getElementById('fileUploadSection');
+
+// Toggle Window
+btn.onclick = () => {
+  const isVisible = win.style.display === 'flex';
+  win.style.display = isVisible ? 'none' : 'flex';
+  if (!isVisible) {
+    showModeSelection();
+  }
+};
+
+closeBtn.onclick = () => {
+  win.style.display = 'none';
+};
+
+// Mode Selection
+function selectMode(mode) {
+  currentMode = mode;
+  modeSelection.style.display = 'none';
+  chatInterface.style.display = 'flex';
+
+  msgs.innerHTML = '';
+
+  if (mode === 'question') {
+    appendMessage('bot', 'Great! You can ask me questions about your documents. Upload a file below or ask about existing documents.');
+  } else if (mode === 'protocol') {
+    appendMessage('bot', '🔍  🤖 \n\nWould you like to know more about any specific aspect?');
+  } else if (mode === 'meeting') {
+    appendMessage('bot', 'I\'d be happy to help you schedule a meeting!\n\nPlease visit: https://acache.co.in/contact\n\nOr provide your preferred:\n• Date and time\n• Meeting topic\n• Contact email\n\nYou can also ask me questions about [a]cache while you\'re here!');
+  }
+
+  setTimeout(() => input.focus(), 100);
+}
+
+function showModeSelection() {
+  modeSelection.style.display = 'flex';
+  chatInterface.style.display = 'none';
+  currentMode = null;
+  uploadedFiles = [];
+  uploadedFilesDiv.innerHTML = '';
+  fileUploadSection.style.display = 'none';
+}
+
+// Add message bubble
+function appendMessage(cls, text) {
+  const d = document.createElement('div');
+  d.className = 'msg ' + cls;
+  d.innerHTML = text.replace(/\n/g, "<br>");
+  msgs.appendChild(d);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+// Add source label
+function appendSources(sources) {
+  if (!sources || sources.length === 0) return;
+  const d = document.createElement('div');
+  d.className = 'msg bot source-label';
+  d.textContent = "📚 Sources: " + sources.map(s => s.split('/').pop()).join(", ");
+  msgs.appendChild(d);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+// File Upload Handlers
+uploadBtn.onclick = () => fileInput.click();
+
+fileInput.onchange = (e) => {
+  handleFiles(e.target.files);
+};
+
+function handleFiles(files) {
+  Array.from(files).forEach(file => {
+    if (!uploadedFiles.find(f => f.name === file.name)) {
+      uploadedFiles.push(file);
+      displayUploadedFile(file);
+    }
+  });
+
+  // Show file upload section if files are present
+  if (uploadedFiles.length > 0) {
+    fileUploadSection.style.display = 'block';
+  }
+}
+
+function displayUploadedFile(file) {
+  const div = document.createElement('div');
+  div.className = 'uploaded-file';
+  div.innerHTML = `
+    <span>📎 ${file.name} (${(file.size / 1024).toFixed(1)} KB)</span>
+    <span class="remove-file" onclick="removeFile('${file.name}')">✕</span>
+  `;
+  uploadedFilesDiv.appendChild(div);
+}
+
+function removeFile(fileName) {
+  uploadedFiles = uploadedFiles.filter(f => f.name !== fileName);
+  uploadedFilesDiv.innerHTML = '';
+  uploadedFiles.forEach(f => displayUploadedFile(f));
+
+  // Hide file upload section if no files
+  if (uploadedFiles.length === 0) {
+    fileUploadSection.style.display = 'none';
+  }
+}
+
+// Send Query with File Support
+async function sendQuery(q) {
+  appendMessage('you', q);
+
+  const sendBtn = document.getElementById('send');
+  sendBtn.disabled = true;
+  sendBtn.textContent = '...';
+
+  try {
+    // If files are uploaded, send them first
+    if (uploadedFiles.length > 0) {
+      await uploadFiles(q);
+      return;
+    }
+
+    // Regular text query
+    const resp = await fetch(backend, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question: q })
+    });
+
+    if (!resp.ok) throw new Error("Network response was not ok");
+
+    const data = await resp.json();
+
+    if (data.answer) {
+      appendMessage('bot', data.answer);
+      appendSources(data.sources);
+    } else if (data.two_words_per_doc) {
+      let msg = "<b>📚 Document Summary:</b><br>";
+      data.two_words_per_doc.forEach(d => {
+        const name = d.path.split("/").pop();
+        msg += `• ${name}: ${d.two_words.join(", ")}<br>`;
+      });
+      appendMessage('bot', msg);
+    } else if (data.answers && data.answers.length > 0) {
+      appendMessage('bot', data.answers[0].text);
+      appendSources([data.answers[0].source_path]);
+    } else {
+      appendMessage('bot', "I couldn't find a clear answer. Try rephrasing your question or upload a relevant document.");
+    }
+
+  } catch (err) {
+    appendMessage('bot', "⚠️ Error: " + err.message);
+  } finally {
+    sendBtn.disabled = false;
+    sendBtn.textContent = 'Send';
+  }
+}
+
+// Upload files with question
+async function uploadFiles(question) {
+  const formData = new FormData();
+  formData.append('question', question);
+
+  uploadedFiles.forEach(file => {
+    formData.append('files', file);
+  });
+
+  try {
+    const resp = await fetch(uploadBackend, {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!resp.ok) throw new Error("Upload failed");
+
+    const data = await resp.json();
+
+    if (data.answer) {
+      appendMessage('bot', data.answer);
+      if (data.sources) {
+        appendSources(data.sources);
+      }
+    } else {
+      appendMessage('bot', "Files processed successfully!");
+    }
+
+    // Clear uploaded files
+    uploadedFiles = [];
+    uploadedFilesDiv.innerHTML = '';
+    fileInput.value = '';
+    fileUploadSection.style.display = 'none';
+
+  } catch (err) {
+    appendMessage('bot', "⚠️ Upload error: " + err.message);
+  } finally {
+    const sendBtn = document.getElementById('send');
+    sendBtn.disabled = false;
+    sendBtn.textContent = 'Send';
+  }
+}
+
+// Send button
+document.getElementById('send').onclick = () => {
+  const qVal = input.value.trim();
+  if (!qVal && uploadedFiles.length === 0) return;
+
+  const question = qVal || "What's in these files?";
+  sendQuery(question);
+  input.value = '';
+};
+
+// Enter key
+input.addEventListener("keypress", function(event) {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    document.getElementById("send").click();
+  }
+});
+</script>
+
+</body>
+</html>
