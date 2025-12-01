@@ -1,3 +1,6 @@
+
+<img width="446" height="453" alt="image" src="https://github.com/user-attachments/assets/e1f3fb81-efb7-4b8d-bd53-ee7c15eba2ff" />
+
 High-level map
 Frontend: web-widget/index.html – the embeddable chat widget UI that talks to the orchestrator backend.
 Backend services (under services/):
