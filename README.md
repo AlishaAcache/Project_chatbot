@@ -1,4 +1,5 @@
 .. current update: proto4 ////
+<img width="1693" height="857" alt="image" src="https://github.com/user-attachments/assets/12bf1970-f3d6-48bf-bfd3-7b10a6216364" />
 
 <img width="921" height="716" alt="image" src="https://github.com/user-attachments/assets/0b082e7b-ab1f-4ddf-aa48-a58548968217" />
 
@@ -38,4 +39,5 @@ G — Generation
 
 Produces the final natural answer (optionally using OpenAI).
 Where: enhance_with_llm() + logic inside /chat
+
 
