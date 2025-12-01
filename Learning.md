@@ -1,3 +1,24 @@
+Tradeoff Check (Azure Cognitive Search vs. Azure + Qdrant)
+Output accuracy
+Qdrant combo wins: native vector index (HNSW, payload filters) lets you tune similarity, mix embeddings, and update in real time; Azure Cognitive Search’s semantic tier is solid but less configurable and slower to ingest freshly chunked chat or lead data.
+Keep ACS only if keyword/legal compliance search is critical; otherwise Qdrant delivers better recall/precision on conversational answers.
+Development time
+ACS-only is faster: built-in vector fields, no extra cluster to wire up.
+Adding Qdrant means provisioning AKS/container app, auth plumbing, new SDK layer, and CI/CD, so plan for extra weeks of infra + integration work.
+Scalability
+Qdrant on AKS scales elastically by shard/replica, supports multi-tenant isolation via payload filters or per-collection design, and handles high write rates better.
+ACS scales too but each tier upgrade is coarse-grained and per-tenant isolation usually requires extra indexes; less flexible for hot ingestion workloads.
+Development cost
+ACS: just your existing services plus search index definitions—minimal additional spend.
+Qdrant: engineering time for deployment manifests, health monitoring, backups, SDK integration; expect higher one-time cost.
+Running cost
+ACS pricing is predictable per tier, and you’re already paying for it.
+Qdrant entails compute (AKS nodes or managed Qdrant), storage, backups, plus ops time; often higher monthly spend unless you shut down ACS’s vector features entirely.
+Hybrid (ACS + Qdrant) is most expensive; consider replacing ACS vector search with Qdrant if budgets are tight.
+Overall:
+Need best possible RAG accuracy, fast freshness, fine-grained vector control → Azure + Qdrant is better despite higher dev/ops cost.
+Need fastest delivery and lowest ongoing spend, acceptable accuracy using standard semantic search → stay with Azure Cognitive Search alone.
+
 # Vector Database Comparison Table
 
 | Vector DB                                     | Open-Source?       | Deployment                            | Key Merits                                                                                                            | Drawbacks                                                          |
