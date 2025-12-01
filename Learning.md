@@ -1,3 +1,87 @@
+High-level map
+Frontend: web-widget/index.html – the embeddable chat widget UI that talks to the orchestrator backend.
+Backend services (under services/):
+tenant-registry/ – who the tenant is (branding, limits, KB index, AI settings).
+orchestrator-api/ – brain of the chatbot; routes each message to the right tool.
+rag-service/ – knowledge base / RAG API for policy & document questions.
+1. web-widget/index.html (frontend)
+Role: Browser-side chat window that:
+Loads tenant-specific config from the backend.
+Sends user messages to the orchestrator.
+Renders responses, suggested buttons, etc.
+Main file to care about:
+web-widget/index.html – contains HTML + JS for:
+Initializing widget with tenantId
+Calling /api/widget/config
+Calling /api/chat/message for chat turns.
+2. services/orchestrator-api (conversation brain)
+Role: Entry point for all chat messages from any channel (widget, WhatsApp, email, etc.).
+Validates tenantId via tenant middleware.
+Detects intent (Azure OpenAI or regex).
+Routes to tools: lead collection, property search, scheduling, knowledge base (RAG).
+Optionally uses Azure OpenAI to polish the final reply.
+Main files:
+server.js – HTTP server & routes:
+Defines /api/chat/message, /api/chat/history/:sessionId, /api/widget/config, /health.
+Wires in middleware and calls processMessage from orchestrator.js.
+middleware/tenant.js – tenant lookup for each request:
+Reads x-tenant-id or query param.
+Calls the tenant registry client to fetch tenant config and attaches it to the request/session.
+services/orchestrator.js – core chatbot workflow:
+Checks if lead collection is active → continues that flow.
+Else, calls detectIntentWithAI (Azure OpenAI) → fallback detectIntent (regex).
+Switches on intent: handleGreeting, handlePropertySearch, handleScheduling, handleKnowledgeQuery, handleGeneral.
+For knowledge, calls RAG via rag-client.js and adds citations; then may call generateResponseWithAI for wording.
+services/ai-intent.js – Azure OpenAI integration:
+detectIntentWithAI – uses function calling to turn free text into structured intents + parameters.
+generateResponseWithAI – optional LLM pass to rewrite/tool-based answers.
+services/session.js – session management (in-memory or Cosmos in prod).
+services/tenant-registry-client.js – HTTP client to the tenant-registry service.
+services/rag-client.js – HTTP client to the RAG service (/api/knowledge/search).
+lead-collection.js, lead-service.js, cosmos-lead-client.js – stateful lead form flow and persistence.
+3. services/tenant-registry (tenant configuration + branding)
+Role: Central config service for all tenants. Everything about “who this tenant is” lives here:
+Branding (colors, logo, custom CSS).
+Widget text & behavior (welcome message, position, enabled).
+Channel enablement (WhatsApp, voice, etc.).
+Knowledge base config (which index name).
+AI config (model, deployment names, limits, etc.).
+Main files:
+server.js – HTTP server & routing:
+Exposes /api/tenants, /api/tenants/:tenantId, /api/widget/config?tenantId=..., etc.
+Connects to Cosmos DB (or in-memory in dev).
+schema/tenant-schema.js – defines full tenant document structure:
+tenantId, branding, widget, channels, knowledgeBase, ai, limits, security.
+scripts/seed-tenants.js (in scripts/) – helper to create demo tenants in Cosmos.
+4. services/rag-service (knowledge base / RAG API)
+Role: Dedicated knowledge base microservice:
+Upload & process docs (PDF, DOCX, TXT, HTML, Markdown).
+Chunk text, call Azure OpenAI embeddings, and index into Azure Cognitive Search per tenant.
+Handle search queries and optionally generate RAG answers with citations.
+Main files:
+server.js – HTTP server & routes:
+/health, /api/knowledge/index/:tenantId, /api/knowledge/upload, /api/knowledge/search, /api/knowledge/status/:tenantId.
+Wires in the RAG core logic from rag-service.js.
+services/rag-service.js – main RAG pipeline:
+Text extraction, chunking, embedding (Azure OpenAI), indexing/searching in Azure Cognitive Search.
+Builds the final answer, sources, and confidence object returned to orchestrator.
+services/rag-client.js – internal helper for talking to Azure Cognitive Search and Azure OpenAI (if you dig into the exact calls).
+If you just want “the main entry points” to read/edit
+Frontend: web-widget/index.html
+Primary backend entry:
+orchestrator-api/server.js
+orchestrator-api/services/orchestrator.js
+Tenant config:
+tenant-registry/server.js
+tenant-registry/schema/tenant-schema.js
+Knowledge base / RAG:
+rag-service/server.js
+rag-service/services/rag-service.js
+If you tell me what you want to customize (e.g., greeting behavior, lead flow, KB answers, widget look), I can point to the exact function(s) inside these files.
+
+-----------------------------------
+
+
 Tradeoff Check (Azure Cognitive Search vs. Azure + Qdrant)
 Output accuracy
 Qdrant combo wins: native vector index (HNSW, payload filters) lets you tune similarity, mix embeddings, and update in real time; Azure Cognitive Search’s semantic tier is solid but less configurable and slower to ingest freshly chunked chat or lead data.
