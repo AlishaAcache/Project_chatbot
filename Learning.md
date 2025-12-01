@@ -1,3 +1,15 @@
+RAG behavior in this project
+
+- Upload document → extract text → chunk into ~1000-token pieces.
+- Optionally it will call Azure OpenAI to get embeddings .
+- Store chunks in a per-tenant Azure Cognitive Search index with fields like title, content, pageNumber, category, etc.
+Retrieval (when I ask something / Prompt in my chatbot )
+- It takes question.
+- Runs it as a search query against the tenant’s index (searchKnowledgeBase), using "" ACS scoring ""(keyword / BM25 style) to "pick top chunks".
+Augmented generation
+Concatenate top chunks into a big context.
+- Uses Azure OpenAI to summarise it.
+
 
 <img width="446" height="453" alt="image" src="https://github.com/user-attachments/assets/e1f3fb81-efb7-4b8d-bd53-ee7c15eba2ff" />
 
