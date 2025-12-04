@@ -1,10 +1,22 @@
-<img width="385" height="528" alt="image" src="https://github.com/user-attachments/assets/d635f616-8a55-407f-a6e0-4fedebe66d66" />
-
+<img width="432" height="578" alt="image" src="https://github.com/user-attachments/assets/e934f046-465d-452a-938a-f3e53249a3a4" />
 
 
 
 prompt : what are the fire safety protoco,ls?
-reply: ChatCompletion(id='chatcmpl-Cizm5qF3gHlV87AeAmWzQ9hllekwd', choices=[Choice(finish_reason='stop', index=0, logprobs=None, message=ChatCompletionMessage(content='The fire safety protocols outlined in the provided context include:\n\n1. **Management Company Duties**:\n - Conduct regular inspections for fire safety hazards.\n - Address any known hazards promptly to avoid liability.\n\n2. **Tenant Duties**:\n - Follow the building’s fire safety rules as set out in the tenancy agreement.\n - Avoid activities and items that increase fire risk.\n - Keep fire exits and escape routes clear at all times.\n\n3. **Smoking in Properties**:\n - Smoking inside the property is strictly prohibited.\n - Designated outdoor smoking areas may be provided, but in most managed Graysons Properties, insurance policies do not allow designated smoking areas in the vicinity of the property.\n - Enforcement includes a written warning for the first breach and a formal notice for the second breach.\n\n4. **Portable Heaters**:\n - There are specific risks associated with portable heaters, particularly regarding contact with flammable materials.\n\n5. **Immediate Removal of Obstructions**:\n - Any obstruction to fire exits or safety equipment must be removed immediately.\n\nThese protocols aim to ensure the safety of all tenants and prevent fire-related incidents.', refusal=None, role='assistant', annotations=[], audio=None, function_call=None, tool_calls=None))], created=1764839929, model='gpt-4o-mini-2024-07-18', object='chat.completion', service_tier='default', system_fingerprint='fp_b547601dbd', usage=CompletionUsage(completion_tokens=229, prompt_tokens=584, total_tokens=813, completion_tokens_details=CompletionTokensDetails(accepted_prediction_tokens=0, audio_tokens=0, reasoning_tokens=0, rejected_prediction_tokens=0), prompt_tokens_details=PromptTokensDetails(audio_tokens=0, cached_tokens=0)))
+reply: The fire safety protocols outlined in the provided context include:
+
+1. **Management Company Duties:**
+- Conduct regular inspections for fire safety hazards to detect any issues and ensure compliance with safety regulations.
+- Provide clear fire safety guidance to tenants at move-in and annually thereafter, which is communicated through the Welcome Letter and Tenant Move-in Event.
+- Record all incidents, warnings, and remedial actions related to fire safety.
+- Liaise with local fire authorities when necessary, especially for repeated offenders of fire safety rules.
+- Consult line managers regarding the termination of tenancies for repeated offenders.
+
+2. **Tenant Duties:**
+- Follow the building’s fire safety rules as outlined in the tenancy agreement.
+- Avoid activities and items that increase fire risks, such as smoking, using portable heaters, candles, cooking appliances, charging electrical scooters, blocking fire exit routes, covering smoke detectors, and using clothes air dryers.
+
+These protocols aim to ensure the safety of all tenants and prevent fire-related incidents.
 
 Qdrant api : eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3MiOiJtIn0.kbx7XxOHpqI5eEhe4lk0Ziw92prWd4R-c2gO8-K7pHo
 Qdrant url  'https://45c7f037-38e1-4fe2-8c2d-63bf77582150.eastus-0.azure.cloud.qdrant.io:6333',
