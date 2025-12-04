@@ -46,7 +46,7 @@ except Exception:
 # Configuration / env
 # -------------------------
 APP_DIR = os.path.dirname(__file__)
-DOCS_DIR = os.path.join(APP_DIR, "docs")
+DOCS_DIR = os.path.join(APP_DIR, "protocols")
 os.makedirs(DOCS_DIR, exist_ok=True)
 
 ALLOWED_EXTS = ("*.txt", "*.md", "*.pdf", "*.docx", "*.png", "*.jpg", "*.jpeg", "*.gif", "*.webp")
@@ -216,7 +216,8 @@ def build_index(upload_to_qdrant: bool = True):
 
     files = []
     for pat in ALLOWED_EXTS:
-        files.extend(glob.glob(os.path.join(DOCS_DIR, pat)))
+        # Recursively search in protocols folder and all subdirectories
+        files.extend(glob.glob(os.path.join(DOCS_DIR, "**", pat), recursive=True))
     files = sorted(list(set(files)))
 
     for path in files:
